@@ -19,12 +19,14 @@ usage() {
     echo "  -h, --help   Show this help message and exit."
 }
 # Show help if -h or --help is passed
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    usage
-    exit 0
-else
-    echo "$1 is not a valid option."
-    exit 1
+if [[ $# -gt 0 ]]; then
+    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+        usage
+        exit 0
+    else
+        echo "$1 is not a valid option."
+        exit 1
+    fi
 fi
 
 # Trap if 'Ctrl + C' is pressed
