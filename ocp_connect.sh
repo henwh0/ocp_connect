@@ -49,7 +49,7 @@ fi
 # Baud rate selection
 BAUD_RATE_OPTIONS=(9600 57600 115200)
 while true; do
-    echo "Select baud rate:"
+    echo "Select a baud rate from the menu below:"
     echo "  1) 9600"
     echo "  2) 57600"
     echo "  3) 115200"
