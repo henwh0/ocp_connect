@@ -4,16 +4,16 @@ usage() {
     echo
     echo "Usage: ocp_connect.sh"
     echo "  Script will connect to the first serial device that matches '/dev/tty.usbserial-*' if connected via USB."
-    echo "  If device is connected via Bluetooth, it will be /dev/tty.RNBT-*"
+    echo "  If device is connected via Bluetooth, it will be '/dev/tty.RNBT-*'"
     echo "  Script prompts user to select a baud rate from a menu."
     echo "  Script will then start a screen session with the serial device and baud rate. Useful for minimum configurations."
+    echo "  You can exit the script before the screen session starts by pressing 'Ctrl + C'."
     echo
     echo "Tips:"
     echo "  From the info I was able to find, the most common baud rates are 9600, 57600, and 115200. Those are your options."
     echo "  If you have trouble, try switching between those baud rates."
     echo "  Suggest creating an alias for this script in your .bashrc or .zshrc file. (I use 'ocp')"
     echo "  If you do not end the screen session as instructed, you may need to execute 'screen -ls' then 'kill' <screen session id>"
-    echo "  Script will only accept one argument: [-h / --help] or [BAUD_RATE]"
     echo
     echo "Options:"
     echo "  -h, --help   Show this help message and exit."
@@ -22,6 +22,9 @@ usage() {
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     usage
     exit 0
+else
+    echo "$1 is not a valid option."
+    exit 1
 fi
 
 # Trap if 'Ctrl + C' is pressed
