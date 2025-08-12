@@ -24,7 +24,7 @@ if [[ $# -gt 0 ]]; then
         usage
         exit 0
     else
-        echo "$1 is not a valid option."
+        echo "'$1' is not a valid option."
         exit 1
     fi
 fi
@@ -52,7 +52,7 @@ while true; do
     echo "Connected to device: $DEVICE"
     echo "Select a baud rate from the menu below:"
     echo "  1) 9600"
-    echo "  2) 57600"
+    echo "  2) 57600 (most common)"
     echo "  3) 115200"
     echo -n "Enter choice [1-3]: "
     read -n 1 choice
