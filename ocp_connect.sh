@@ -49,6 +49,7 @@ fi
 # Baud rate selection
 BAUD_RATE_OPTIONS=(9600 57600 115200)
 while true; do
+    echo "Connected to device: $DEVICE"
     echo "Select a baud rate from the menu below:"
     echo "  1) 9600"
     echo "  2) 57600"
