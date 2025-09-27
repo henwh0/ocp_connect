@@ -1,12 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 usage() {
-    echo "Usage: ocp_connect.sh"
-    echo "  Script will connect to the first serial device that matches '/dev/tty.usbserial-*' if connected via USB."
-    echo "  If device is connected via Bluetooth, it will be '/dev/tty.RNBT-*'"
-    echo "  Script prompts user to select a baud rate from a menu."
-    echo "  Script will then start a screen session with the serial device and baud rate. Useful for minimum configurations."
-    echo "  You can exit the script before the screen session starts by pressing 'Ctrl + C'."
+    echo "Usage: ocp_connect.sh" <option>
     echo
     echo "How to use:"
     echo "  Connect the debug card to your computer via USB or Bluetooth."
@@ -31,8 +26,8 @@ usage() {
 }
 
 # Show help if -h or --help is passed
-if [[ $# -gt 0 ]]; then
-    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+if [ $# -gt 0 ]; then
+    if [ "$1" == "-h" || "$1" == "--help" ]; then
         usage
         exit 0
     else
@@ -50,7 +45,9 @@ trap ctrl_c INT
 
 # Check if "screen" is installed
 if ! command -v screen &> /dev/null; then
-    echo "Screen is not installed. Please install it and try again."
+    echo "Screen is not installed. Attempting to install with homebrew.."
+elif ! command -v 'brew install screen'
+    echo "Cannot install screen. Attempt to manually install and try again.."
     exit 1
 fi
 
@@ -76,13 +73,15 @@ assign_baud_rate() {
         echo "  1) 9600"
         echo "  2) 57600 (most common)"
         echo "  3) 115200"
-        echo -n "Enter choice [1-3]: "
+        echo "  4) Enter custom baud rate if needed"
+        echo -n "Enter choice [1-4]: "
         read -n 1 choice
         echo ""
         case "$choice" in
             1) BAUD_RATE=${BAUD_RATE_OPTIONS[0]}; break ;;
             2) BAUD_RATE=${BAUD_RATE_OPTIONS[1]}; break ;;
             3) BAUD_RATE=${BAUD_RATE_OPTIONS[2]}; break ;;
+            4)
             *)
                 echo "Invalid selection. Choose from options in menu."
                 ;;
