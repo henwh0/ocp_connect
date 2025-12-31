@@ -1,9 +1,19 @@
 #!/bin/bash
 
+# verison 1.1
+
+# ANSI color codes
+RED=$'\e[1;31m'
+GREEN=$'\e[1;32m'
+YELLOW=$'\e[1;33m'
+BLUE=$'\e[1;34m'
+NC=$'\e[0m' # No Color/Default
+
 usage() {
-    echo "Usage: ocp_connect.sh" <option>
+    echo "Usage: ocp_connect.sh [option]"
     echo
     echo "How to use:"
+    echo "  Execute script from local console."
     echo "  Connect the debug card to your computer via USB or Bluetooth."
     echo "  Open iTerm2 (download if not installed) and navigate to the directory where the script is located."
     echo "  Run './ocp_connect.sh'. If permission denied, run 'chmod +x ocp_connect.sh' first."
@@ -16,43 +26,64 @@ usage() {
     echo
     echo "Troubleshooting:"
     echo "  Ensure that the debug card is connected."
-    echo "  Run 'ls /dev/tty.usbserial-*' or 'ls /dev/tty.RNBT-*' to check for the device presence."
     echo "  Unplug and re-plug the debug card and USB cable."
-    echo "  If 'screen' is not found, install via homebrew: 'brew install screen'"
-    echo "  If issues persist, try running the script with sudo. If that doesn't work, feel free to ping Henry McGinnis on workchat."
+    echo "  Run 'ls /dev/tty.usbserial-*' or 'ls /dev/tty.RNBT-*' to check for the device presence."
+    echo "  If issues persist, try running the script with sudo."
     echo
     echo "Options:"
     echo "  -h, --help   Show this help screen and exits."
 }
 
-# Show help if -h or --help is passed
-if [ $# -gt 0 ]; then
-    if [ "$1" == "-h" || "$1" == "--help" ]; then
+if [[ $# -gt 0 ]]; then
+    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
         usage
         exit 0
     else
-        echo "'$1' is not a valid option."
+        echo "${RED}'$1' is not a valid option.${NC}"
         exit 1
     fi
 fi
 
-# Trap if 'Ctrl + C' is pressed
 ctrl_c() {
-    echo -e "\nUser exited script with 'Ctrl + C'..."
+    echo -e "${RED}\nUser exited script with 'Ctrl+C'...${NC}"
     exit 1
 }
-trap ctrl_c INT
+trap ctrl_c SIGINT
+# Check if screen is installed, try to install if not
+check_screen_command () {
+    if ! command -v screen &> /dev/null; then
+        echo "${YELLOW}Screen is not installed. Attempting to install with Homebrew...${NC}"
+        if ! command -v brew &> /dev/null; then
+            echo "${RED}Homebrew is not installed. Please install Homebrew first:${NC} https://brew.sh/"
+            exit 1
+        else
+            echo "${GREEN}Homebrew is installed.${NC}"
+        fi
 
-# Check if "screen" is installed
-if ! command -v screen &> /dev/null; then
-    echo "Screen is not installed. Attempting to install with homebrew.."
-elif ! command -v 'brew install screen'
-    echo "Cannot install screen. Attempt to manually install and try again.."
-    exit 1
-fi
+        echo "${YELLOW}Running 'brew update' to ensure Homebrew is up to date...${NC}"
+        if ! brew update; then
+            echo "${RED}Failed to update Homebrew. Please check your Homebrew installation.${NC}"
+            exit 1
+        else
+            echo "${GREEN}Homebrew updated successfully.${NC}"
+        fi
 
-echo "Execute script with '-h' or '--help' for more information."
+        if ! brew install screen; then
+            echo "${RED}Failed to install 'screen' with 'brew install screen'. Please install it manually and try again.${NC}"
+            exit 1
+        fi
 
+        sleep 3
+        if ! command -v screen &> /dev/null; then
+            echo "${RED}Failed to install 'screen'. Please install it manually and try again.${NC}"
+            exit 1
+        else
+            echo "${GREEN}'screen' installed successfully.${NC}"
+        fi
+    else
+        echo "${GREEN}'Screen' already installed.${NC}"
+    fi
+}
 # Assign device variable and check that the device exists
 assign_device() {
     DEVICE=$(ls /dev/tty.usbserial-* 2>/dev/null | head -n 1)
@@ -60,40 +91,46 @@ assign_device() {
         DEVICE=$(ls /dev/tty.RNBT-* 2>/dev/null | head -n 1)
     fi
     if [[ -z "$DEVICE" ]]; then
-        echo "Serial device not found. Please ensure that the debug card is connected via USB or Bluetooth."
+        echo "${RED}Serial device not found. Please ensure that the debug card is connected via USB or Bluetooth.${NC}"
         exit 1
+    else
+        echo "${GREEN}Device found:${NC} $DEVICE"
     fi
 }
-# Baud rate selection
+
 assign_baud_rate() {
     BAUD_RATE_OPTIONS=(9600 57600 115200)
     while true; do
-        echo "Connected to device: $DEVICE"
-        echo "Select a baud rate from the menu below:"
+        echo "${BLUE}Select a baud rate from the menu below:${NC}"
         echo "  1) 9600"
         echo "  2) 57600 (most common)"
         echo "  3) 115200"
-        echo "  4) Enter custom baud rate if needed"
-        echo -n "Enter choice [1-4]: "
+        echo "  4) Custom baud rate if needed"
+        echo -n "${BLUE}Enter choice [1-4]:${NC}"
         read -n 1 choice
         echo ""
         case "$choice" in
             1) BAUD_RATE=${BAUD_RATE_OPTIONS[0]}; break ;;
             2) BAUD_RATE=${BAUD_RATE_OPTIONS[1]}; break ;;
             3) BAUD_RATE=${BAUD_RATE_OPTIONS[2]}; break ;;
-            4)
+            4) read -p "${BLUE}Enter custom baud rate:${NC}" BAUD_RATE
+                if [[ $BAUD_RATE =~ ^[0-9]+$ ]]; then
+                    break
+                else
+                    echo "${YELLOW}Invalid baud rate. Custom baud rate must be a positive interger.${NC}"
+                fi
+                ;;
             *)
-                echo "Invalid selection. Choose from options in menu."
+                echo "${RED}Invalid selection. Choose from options in menu.${NC}"
                 ;;
         esac
     done
 }
 
-# Prepare to start screen session
 prepare_screen_session() {
-    echo "Ensure that you have selected the correct host."
-    echo "To end the screen session, press 'Ctrl + A' then enter ':quit'"
-    read -r -p "Press 'Enter' to start the screen session.."
+    echo "${BLUE}Ensure that you have selected the correct host."
+    echo "To end the screen session, press 'Ctrl+A' then enter ':quit'"
+    read -r -p "Press 'enter' to start the screen session..${NC}"
     echo ""
     # Print the box / 40 characters in between pipes.
     echo "+----------------------------------------+"
@@ -107,17 +144,16 @@ prepare_screen_session() {
     sleep 1.5
 }
 
-# Starting the screen session
 start_screen_session() {
-    screen "$DEVICE" "$BAUD_RATE" || echo "An error occurred when starting the screen session: $?"
+    screen "$DEVICE" "$BAUD_RATE" || echo "${RED}An error occurred when starting the screen session:${NC} $?"
 }
 
 main () {
+    check_screen_command
     assign_device
     assign_baud_rate
     prepare_screen_session
     start_screen_session
 }
+
 main
-# Henry McGinnis (FRC)
-# If you do not end the screen session as instructed, you may need to execute "Screen -ls" then "kill" whatever the screen number is.
