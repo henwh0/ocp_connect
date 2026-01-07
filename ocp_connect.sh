@@ -117,7 +117,7 @@ assign_baud_rate() {
                 if [[ $BAUD_RATE =~ ^[0-9]+$ ]]; then
                     break
                 else
-                    echo "${YELLOW}Invalid baud rate. Custom baud rate must be a positive interger.${NC}"
+                    echo "${YELLOW}Invalid baud rate. Custom baud rate must be a positive integer.${NC}"
                 fi
                 ;;
             *)
